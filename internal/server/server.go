@@ -25,6 +25,19 @@ func newgrpcServer(config *Config) (srv *grpcServer, err error) {
 	return srv, nil
 }
 
+func NewGRPCServer(config *Config, opts ...grpc.ServerOption) (
+	*grpc.Server,
+	error,
+) {
+	gsrv := grpc.NewServer(opts...)
+	srv, err := newgrpcServer(config)
+	if err != nil {
+		return nil, err
+	}
+	api.RegisterLogServer(gsrv, srv)
+	return gsrv, nil
+}
+
 func (s *grpcServer) Produce(ctx context.Context, req *api.ProduceRequest) (
 	*api.ProduceResponse, error) {
 	offset, err := s.CommitLog.Append(req.Record)
@@ -88,14 +101,4 @@ func (s *grpcServer) ConsumeStream(
 type CommitLog interface {
 	Append(*api.Record) (uint64, error)
 	Read(uint64) (*api.Record, error)
-}
-
-func NewGRPCServer(config *Config) (*grpc.Server, error) {
-	gsrv := grpc.NewServer()
-	srv, err := newgrpcServer(config)
-	if err != nil {
-		return nil, err
-	}
-	api.RegisterLogServer(gsrv, srv)
-	return gsrv, nil
 }
