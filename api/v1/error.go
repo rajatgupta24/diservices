@@ -7,6 +7,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var _ error = ErrOffsetOutOfRange{}
+
 type ErrOffsetOutOfRange struct {
 	Offset uint64
 }
@@ -30,6 +32,7 @@ func (e ErrOffsetOutOfRange) GRPCStatus() *status.Status {
 	}
 	return std
 }
+
 func (e ErrOffsetOutOfRange) Error() string {
 	return e.GRPCStatus().Err().Error()
 }

@@ -20,15 +20,13 @@ type index struct {
 }
 
 func newIndex(f *os.File, c Config) (*index, error) {
-	idx := &index{
-		file: f,
-	}
+	idx := &index{file: f}
 	fi, err := os.Stat(f.Name())
 	if err != nil {
 		return nil, err
 	}
 	idx.size = uint64(fi.Size())
-	if err = os.Truncate(
+	if err := os.Truncate(
 		f.Name(), int64(c.Segment.MaxIndexBytes),
 	); err != nil {
 		return nil, err
@@ -44,7 +42,7 @@ func newIndex(f *os.File, c Config) (*index, error) {
 }
 
 func (i *index) Close() error {
-	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
+	if err := i.mmap.Sync(gommap.MS_ASYNC); err != nil {
 		return err
 	}
 	if err := i.file.Sync(); err != nil {
@@ -80,7 +78,7 @@ func (i *index) Write(off uint32, pos uint64) error {
 	}
 	enc.PutUint32(i.mmap[i.size:i.size+offWidth], off)
 	enc.PutUint64(i.mmap[i.size+offWidth:i.size+entWidth], pos)
-	i.size += uint64(entWidth)
+	i.size += entWidth
 	return nil
 }
 

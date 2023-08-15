@@ -21,7 +21,6 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 		baseOffset: baseOffset,
 		config:     c,
 	}
-	var err error
 	storeFile, err := os.OpenFile(
 		path.Join(dir, fmt.Sprintf("%d%s", baseOffset, ".store")),
 		os.O_RDWR|os.O_CREATE|os.O_APPEND,
@@ -64,14 +63,14 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error) {
 		return 0, err
 	}
 	if err = s.index.Write(
-		// index offsets are relative to base offset
+		// index offset are relative to base offset
 		uint32(s.nextOffset-uint64(s.baseOffset)),
 		pos,
 	); err != nil {
 		return 0, err
 	}
 	s.nextOffset++
-	return cur, nil
+	return record.Offset, nil
 }
 
 func (s *segment) Read(off uint64) (*api.Record, error) {
@@ -80,7 +79,6 @@ func (s *segment) Read(off uint64) (*api.Record, error) {
 		return nil, err
 	}
 	p, err := s.store.Read(pos)
-
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +115,9 @@ func (s *segment) Close() error {
 	return nil
 }
 
-// func nearestMultiple(j, k uint64) uint64 {
-// 	if j >= 0 {
-// 		return (j / k) * k
-// 	}
-// 	return ((j - k + 1) / k) * k
-// }
+func nearestMultiple(j, k uint64) uint64 {
+	if j >= 0 {
+		return (j / k) * k
+	}
+	return (j - k + 1) * k
+}

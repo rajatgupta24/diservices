@@ -46,7 +46,7 @@ func (s *store) Append(p []byte) (n uint64, pos uint64, err error) {
 	if err != nil {
 		return 0, 0, err
 	}
-	w += lenWidth
+	w += int(lenWidth)
 	s.size += uint64(w)
 	return uint64(w), pos, nil
 }
@@ -80,11 +80,8 @@ func (s *store) ReadAt(p []byte, off int64) (int, error) {
 func (s *store) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	err := s.buf.Flush()
-	if err != nil {
+	if err := s.buf.Flush(); err != nil {
 		return err
 	}
 	return s.File.Close()
 }
-
-

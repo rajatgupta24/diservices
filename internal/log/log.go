@@ -2,7 +2,6 @@ package log
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"sort"
@@ -13,10 +12,22 @@ import (
 	api "github.com/rajatgupta24/diservices/api/v1"
 )
 
+/*
+
+* Record—the data stored in our log.
+* Store—the file we store records in.
+* Index—the file we store index entries in.
+* Segment—the abstraction that ties a store and an index together.
+* Log—the abstraction that ties all the segments together.
+
+ */
+
 type Log struct {
-	mu            sync.RWMutex
-	Dir           string
-	Config        Config
+	mu sync.RWMutex
+
+	Dir    string
+	Config Config
+
 	activeSegment *segment
 	segments      []*segment
 }
@@ -36,14 +47,13 @@ func NewLog(dir string, c Config) (*Log, error) {
 }
 
 func (l *Log) setup() error {
-	files, err := ioutil.ReadDir(l.Dir)
+	files, err := os.ReadDir(l.Dir)
 	if err != nil {
 		return err
 	}
 	var baseOffsets []uint64
 	for _, file := range files {
 		offStr := strings.TrimSuffix(
-
 			file.Name(),
 			path.Ext(file.Name()),
 		)
@@ -57,12 +67,12 @@ func (l *Log) setup() error {
 		if err = l.newSegment(baseOffsets[i]); err != nil {
 			return err
 		}
-		// baseOffset contains dup for index and store so we skip
+		// baseOffsets contains dup for index and stor so we skip
 		// the dup
 		i++
 	}
 	if l.segments == nil {
-		if err = l.newSegment(
+		if err := l.newSegment(
 			l.Config.Segment.InitialOffset,
 		); err != nil {
 			return err
@@ -108,6 +118,7 @@ func (l *Log) Close() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
